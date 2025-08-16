@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';                    
+import dbRoutes from './routes/db.routes.js';
 
 
 dotenv.config();
@@ -14,7 +15,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.use('/db', dbRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');
