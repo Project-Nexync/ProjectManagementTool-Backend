@@ -34,7 +34,6 @@ The **backend** of the Collaborative Project Management Tool powers the web plat
 ## 📂 Project Structure
 ```
 backend/
-backend/
 |-- src/
 |   |-- config/         
 |   |-- controllers/   
@@ -70,4 +69,4 @@ JWT_SECRET=<your_secret>
 ```bash
 node server.js
 ```
-The backend will now be running at:  **http://localhost:3000**
+The backend will now be running at:  **http://localhost:5000**
