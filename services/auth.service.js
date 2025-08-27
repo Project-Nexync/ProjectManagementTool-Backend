@@ -4,9 +4,9 @@ import bcrypt from "bcrypt";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
-export const register = async ({ firstname, lastname, profile_pic, email, password, notification }) => {
+export const register = async ({ firstname, lastname, username, profile_pic, email, password, notification }) => {
   try {
-    if (!firstname || !lastname || !email || !password) {
+    if (!firstname || !lastname || !email || !password ||!username) {
       return { success: false, status: 400, message: "Required fields missing" };
     }
 
@@ -18,9 +18,9 @@ export const register = async ({ firstname, lastname, profile_pic, email, passwo
     const hash = await bcrypt.hash(password, 10);
 
     const result = await db.query(
-      `INSERT INTO users (firstname, lastname, password, email, notification, profile_pic) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING user_id `,
-      [firstname, lastname, hash, email, notification ?? false, profile_pic ?? null]
+      `INSERT INTO users (firstname, lastname, username, password, email, notification, profile_pic) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING user_id `,
+      [firstname, lastname,username ?? null, hash, email, notification ?? false, profile_pic ?? null]
     );
 
     return {
@@ -43,7 +43,7 @@ export const login = async ({ email, password }) => {
     }
 
     const {rows} = await db.query(
-      "SELECT user_id, firstname, email, password FROM users WHERE email = $1",
+      "SELECT user_id,username, firstname, email, password FROM users WHERE email = $1",
       [email]
     );
 
@@ -67,7 +67,7 @@ export const login = async ({ email, password }) => {
       token,
       user: {
         id: user.user_id,
-        firstname: user.firstname,
+        username: user.username,
         email: user.email
       }
     };
