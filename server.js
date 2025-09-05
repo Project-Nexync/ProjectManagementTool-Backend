@@ -4,6 +4,7 @@ import cors from 'cors';
 import dbRoutes from './routes/db.routes.js';
 import authRoutes from './routes/auth.route.js';
 import projectRoutes from './routes/user.route.js';
+import editRoutes from './routes/edit.route.js';
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/db', dbRoutes);
 app.use('/auth',authRoutes);
 app.use("/project", projectRoutes);
+app.use("/edit",editRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');
