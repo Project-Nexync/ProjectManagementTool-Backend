@@ -193,7 +193,6 @@ export const viewProject = async (userId, projectId) => {
       ` SELECT 
             t.task_id, 
             t.task_name, 
-            t.description, 
             t.status, 
             ta.user_id AS assigned_to,  -- Fetch assigned user
             t.priority, 
@@ -216,6 +215,76 @@ export const viewProject = async (userId, projectId) => {
     };
   } catch (err) {
     console.error("viewProject error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+export const createTasks = async (tasksData) => {
+  try {
+    if (!tasksData || !Array.isArray(tasksData) || tasksData.length === 0) {
+      return { success: false, status: 400, message: "No tasks provided" };
+    }
+
+    const validStatuses = ["Pending", "Ongoing", "Completed"];
+    const createdTasks = [];
+
+    await db.query('BEGIN');
+
+    for (const task of tasksData) {
+      const { projectId, taskName, status = 'Pending', fileAttachment = null, dueDate = null, assignedMembers = [] } = task;
+
+      if (!projectId || !taskName) {
+        await db.query('ROLLBACK');
+        return { success: false, status: 400, message: "Project ID and task name are required for all tasks" };
+      }
+
+      if (!validStatuses.includes(status)) {
+        await db.query('ROLLBACK');
+        return { success: false, status: 400, message: `Invalid status value for task "${taskName}"` };
+      }
+
+      // Insert task
+      const taskResult = await db.query(
+        `INSERT INTO tasks (project_id, task_name, status, file_attachment, due_date)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING task_id, project_id, task_name, status, file_attachment, due_date, created_at`,
+        [projectId, taskName, status, fileAttachment, dueDate]
+      );
+
+      const createdTask = taskResult.rows[0];
+
+      // Assign members if they exist in project_members
+      for (const userId of assignedMembers) {
+        const memberCheck = await db.query(
+          `SELECT * FROM project_members WHERE project_id = $1 AND user_id = $2`,
+          [projectId, userId]
+        );
+
+        if (memberCheck.rows.length > 0) {
+          await db.query(
+            `INSERT INTO task_assignments (task_id, user_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
+            [createdTask.task_id, userId]
+          );
+        }
+      }
+
+      createdTasks.push(createdTask);
+    }
+
+    await db.query('COMMIT');
+
+    return {
+      success: true,
+      status: 201,
+      message: "Tasks created successfully",
+      tasks: createdTasks
+    };
+
+  } catch (err) {
+    await db.query('ROLLBACK');
+    console.error("createTasks error:", err);
     return { success: false, status: 500, message: "Internal server error" };
   }
 };

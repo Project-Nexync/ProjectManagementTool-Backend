@@ -1,4 +1,4 @@
-import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService } from "../services/user.service.js";
+import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService } from "../services/user.service.js";
 
 export const addProject = async (req, res) => {
   const createdby = req.user.id;
@@ -35,3 +35,20 @@ export const viewProject = async(req,res)=>{
 }
 
 
+export const createTasks = async (req, res) => {
+  const { projectId } = req.params;  
+  const tasksData = req.body.tasks;  
+
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: "Project ID is required in params" });
+  }
+
+  // Add projectId to each task
+  const tasksWithProject = tasksData.map(task => ({
+    ...task,
+    projectId: parseInt(projectId, 10)
+  }));
+
+  const result = await createTasksService(tasksWithProject);
+  res.status(result.status).json(result);
+};

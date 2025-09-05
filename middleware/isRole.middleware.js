@@ -4,7 +4,7 @@ export const authorize = (roles = []) => {
   return async (req, res, next) => {
     try {
       const userId = req.user.id;
-      const { projectId } = req.params;
+      const { projectId,taskId } = req.params;
 
       if (!userId) {
         return res.status(401).json({ success: false, message: "Unauthorized: no user id" });
@@ -42,6 +42,21 @@ export const authorize = (roles = []) => {
       // Step 3: Check if userRole is in allowed roles
       if (!roles.includes(userRole)) {
         return res.status(403).json({ success: false, message: "Access denied" });
+      }
+
+      if (userRole === "member") {
+        if (!taskId) {
+          return res.status(403).json({ success: false, message: "Task ID required for members" });
+        }
+
+        const taskAssignment = await db.query(
+          "SELECT * FROM task_assignments WHERE task_id = $1 AND user_id = $2",
+          [taskId, userId]
+        );
+
+        if (taskAssignment.rows.length === 0) {
+          return res.status(403).json({ success: false, message: "Forbidden: member not assigned to this task" });
+        }
       }
 
       next();
