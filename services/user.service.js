@@ -253,19 +253,31 @@ export const createTasks = async (tasksData) => {
 
       const createdTask = taskResult.rows[0];
 
-      // Assign members if they exist in project_members
-      for (const userId of assignedMembers) {
+      // Convert usernames to user IDs
+      const userIds = [];
+      for (const username of assignedMembers) {
+        const userRes = await db.query(
+          `SELECT user_id FROM users WHERE username = $1`,
+          [username]
+        );
+        if (userRes.rows.length > 0) {
+          userIds.push(userRes.rows[0].user_id);
+        }
+      }
+
+      // Assign members if they exist in project_members and are not visitors
+      for (const memberId of userIds) {
         const memberCheck = await db.query(
-          `SELECT * FROM project_members WHERE project_id = $1 AND user_id = $2`,
-          [projectId, userId]
+          `SELECT role FROM project_members WHERE project_id = $1 AND user_id = $2`,
+          [projectId, memberId]
         );
 
-        if (memberCheck.rows.length > 0) {
+        if (memberCheck.rows.length > 0 && memberCheck.rows[0].role !== 'viewer') {
           await db.query(
             `INSERT INTO task_assignments (task_id, user_id)
              VALUES ($1, $2)
              ON CONFLICT DO NOTHING`,
-            [createdTask.task_id, userId]
+            [createdTask.task_id, memberId]
           );
         }
       }
