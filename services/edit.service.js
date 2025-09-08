@@ -73,7 +73,6 @@ export const editduedate = async (taskId, duedate) => {
 };
 
 //add member
-
 export const addMember = async (projectId, assignee, invitedby) => {
   const client = await db.connect();
   try {
@@ -90,7 +89,7 @@ export const addMember = async (projectId, assignee, invitedby) => {
 
     await client.query("BEGIN");
 
-    // Get project (ensure it exists)
+    // Get project 
     const { rows: projectRows } = await client.query(
       "SELECT * FROM projects WHERE project_id = $1",
       [projectId]
@@ -154,3 +153,113 @@ export const addMember = async (projectId, assignee, invitedby) => {
     client.release();
   }
 };
+
+
+export const addAssignee = async (projectId, assignee, taskId, userId) => {
+  try {
+    if (!projectId || !assignee || !taskId || !userId) {
+      return { success: false, status: 400, message: "Required fields missing" };
+    }
+
+    //Check the assignee's role in the project
+    const memberRes = await db.query(
+      `select role from project_members where project_id = $1 and user_id = $2`,
+      [projectId, assignee]
+    );
+    if (memberRes.rowCount === 0) {
+      return { success: false, status: 403, message: "User is not part of this project" };
+    }
+    if (memberRes.rows[0].role === "visitor") {
+      return { success: false, status: 403, message: "User is a visitor and cannot be assigned to tasks" };
+    }
+
+    //Check if already assigned
+    const checkRes = await db.query(
+      `Select 1 from task_assignments where task_id = $1 and user_id = $2`,
+      [taskId, assignee]
+    );
+    if (checkRes.rowCount > 0) {
+      return { success: false, status: 409, message: "User already assigned to this task" };
+    }
+
+    //Assign member to the task
+    await db.query(
+      `Insert into task_assignments (task_id, user_id) values ($1, $2)`,
+      [taskId, assignee]
+    );
+
+    return {
+      success: true,
+      status: 201,
+      message: "Member assigned to task successfully",
+      assignedUser: assignee,
+    };
+  } catch (err) {
+    console.error("Edit member error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+
+export const editTaskDescription = async (taskId, task_name) => {
+  try {
+    if (!taskId || !task_name) {
+      return { success: false, status: 400, message: "Required fields missing" };
+    }
+
+    const result = await db.query(
+      `UPDATE tasks 
+       SET task_name = $1 
+       WHERE task_id = $2 
+       RETURNING *;`,
+      [task_name, taskId]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, status: 404, message: "Task not found" };
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: "Task updated successfully",
+      updatedTask: result.rows[0],
+    };
+  } catch (err) {
+    console.error("Edit task error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+
+export const deletetask = async (taskId) => {
+  try {
+    if (!taskId) {
+      return { success: false, status: 400, message: "Task ID is required" };
+    }
+
+    const result = await db.query(
+      `DELETE FROM tasks 
+       WHERE task_id = $1 
+       RETURNING *;`,
+      [taskId]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, status: 404, message: "Task not found" };
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: "Task deleted successfully",
+      deletedTask: result.rows[0],
+    };
+  } catch (err) {
+    console.error("Delete task error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+
+
