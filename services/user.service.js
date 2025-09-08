@@ -12,7 +12,7 @@ export const addProject = async ({ name, description, startdate, endate, created
       if (!m?.email) {
         return { success: false, status: 400, message: "Each assignee must include email" };
       }
-      // ✅ no role validation here
+    
     }
 
     await client.query("BEGIN");
@@ -87,7 +87,7 @@ export const viewAllProject = async (userId) => {
       return { success: false, status: 400, message: "Required fields missing" };
     }
 
-    // Step 1: Get all projects for this user (either admin or member)
+    //Get all projects for this user
     const projectResult = await db.query(
       `
       select p.project_id, p.name, p.description, p.end_date, p.created_by
@@ -101,7 +101,7 @@ export const viewAllProject = async (userId) => {
 
     const projects = projectResult.rows;
 
-    // Step 2: For each project, fetch its members
+    //For each project, fetch its members
     for (let project of projects) {
       const memberResult = await db.query(
         `
@@ -136,7 +136,7 @@ export const viewProject = async (userId, projectId) => {
       return { success: false, status: 400, message: "Required fields missing" };
     }
 
-    // Step 1: Get project details + created_by
+    //Get project details + created_by
     const projectResult = await db.query(
       `select project_id, name, description, end_date,created_by
        from projects where project_id = $1`,
@@ -149,7 +149,7 @@ export const viewProject = async (userId, projectId) => {
 
     const project = projectResult.rows[0];
 
-    // Step 2: Get all members (project_members + admin)
+    //Get all members (project_members + admin)
     const membersResult = await db.query(
       `select u.username, pm.role
       from project_members pm
@@ -158,7 +158,7 @@ export const viewProject = async (userId, projectId) => {
       [projectId]
     );
 
-    // Fetch admin (creator)
+
     const adminResult = await db.query(
       `select username from users where user_id = $1`,
       [project.created_by]
@@ -174,7 +174,7 @@ export const viewProject = async (userId, projectId) => {
 
     project.members = membersResult.rows;
 
-    // Step 3: Find role of logged-in user
+    //Find role of logged-in user
     let userRole = "Visitor";
     if (project.created_by === userId) {
       userRole = "Admin";
@@ -194,11 +194,12 @@ export const viewProject = async (userId, projectId) => {
             t.task_id, 
             t.task_name, 
             t.status, 
-            ta.user_id AS assigned_to,  -- Fetch assigned user
+            u.username AS assigned_to,  -- Get username from users table
             t.priority, 
             t.due_date
         FROM tasks t
-        LEFT JOIN task_assignments ta ON t.task_id = ta.task_id  -- LEFT JOIN to include all tasks, even if no user is assigned
+        LEFT JOIN task_assignments ta ON t.task_id = ta.task_id
+        LEFT JOIN users u ON ta.user_id = u.user_id  
         WHERE t.project_id = $1; `,
       [projectId]
     );
