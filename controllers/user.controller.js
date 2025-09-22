@@ -1,4 +1,4 @@
-import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService } from "../services/user.service.js";
+import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService, progress as progressService } from "../services/user.service.js";
 
 export const addProject = async (req, res) => {
   const createdby = req.user.id;
@@ -34,7 +34,6 @@ export const viewProject = async(req,res)=>{
     res.status(result.status).json(result);
 }
 
-
 export const createTasks = async (req, res) => {
   const { projectId } = req.params;  
   const tasksData = req.body.tasks;  
@@ -52,3 +51,9 @@ export const createTasks = async (req, res) => {
   const result = await createTasksService(tasksWithProject);
   res.status(result.status).json(result);
 };
+
+export const  progress= async(req,res)=>{
+    const { projectId } = req.params;
+    const result = await progressService(projectId)
+    res.status(result.status).json(result);
+}
