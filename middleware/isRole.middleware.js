@@ -10,7 +10,7 @@ export const authorize = (roles = []) => {
         return res.status(401).json({ success: false, message: "Unauthorized: no user id" });
       }
 
-      // Step 1: Check if user is project Admin (created_by)
+      //Check if user is project Admin (created_by)
       const projectResult = await db.query(
         "select created_by from projects where project_id = $1",
         [projectId]
@@ -23,11 +23,10 @@ export const authorize = (roles = []) => {
       const createdBy = projectResult.rows[0].created_by;
 
       if (createdBy === userId) {
-        // User is Admin → always allow
         return next();
       }
 
-      // Step 2: If not admin, check role from project_members
+      //If not admin, check role from project_members
       const memberResult = await db.query(
         "select role from project_members where project_id = $1 and user_id = $2",
         [projectId, userId]
@@ -37,9 +36,9 @@ export const authorize = (roles = []) => {
         return res.status(403).json({ success: false, message: "Forbidden: not a project member" });
       }
 
-      const userRole = memberResult.rows[0].role; // can be Manager, Member, Visitor
+      const userRole = memberResult.rows[0].role; 
 
-      // Step 3: Check if userRole is in allowed roles
+      //Check if userRole is in allowed roles
       if (!roles.includes(userRole)) {
         return res.status(403).json({ success: false, message: "Access denied" });
       }

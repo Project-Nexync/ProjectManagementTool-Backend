@@ -17,7 +17,7 @@ export const addProject = async ({ name, description, startdate, endate, created
 
     await client.query("BEGIN");
 
-    // 1) Create project
+    //Create project
     const { rows: [project] } = await client.query(
       `INSERT INTO projects (name, description, start_date, end_date, created_by)
        VALUES ($1, $2, $3, $4, $5)
@@ -28,10 +28,10 @@ export const addProject = async ({ name, description, startdate, endate, created
     const membersAdded = [];
     const invitationsCreated = [];
 
-    // 2) Add members or create invitations
+    //Add members or create invitations
     for (const m of members) {
       const email = String(m.email).trim();
-      const role = (m.role ? String(m.role).toLowerCase() : "visitor"); // default visitor
+      const role = (m.role ? String(m.role).toLowerCase() : "viewer");
 
       const { rows: userRows } = await client.query(
         "SELECT user_id FROM users WHERE email = $1",
@@ -80,7 +80,6 @@ export const addProject = async ({ name, description, startdate, endate, created
 };
 
 //view Project
-
 export const viewAllProject = async (userId) => {
   try {
     if (!userId) {
@@ -112,7 +111,7 @@ export const viewAllProject = async (userId) => {
         `,
         [project.project_id]
       );
-      project.members = memberResult.rows; // attach members
+      project.members = memberResult.rows; 
     }
 
     return {
@@ -129,7 +128,6 @@ export const viewAllProject = async (userId) => {
 
 
 //view project one by one
-
 export const viewProject = async (userId, projectId) => {
   try {
     if (!projectId || !userId) {
@@ -188,13 +186,13 @@ export const viewProject = async (userId, projectId) => {
       }
     }
 
-    // Step 4: Get all tasks
+    // Get all tasks
     const taskResult = await db.query(
       ` SELECT 
             t.task_id, 
             t.task_name, 
             t.status, 
-            u.username AS assigned_to,  -- Get username from users table
+            u.username AS assigned_to,  
             t.priority, 
             t.due_date
         FROM tasks t
@@ -206,7 +204,6 @@ export const viewProject = async (userId, projectId) => {
 
     project.tasks = taskResult.rows;
 
-    // Final response
     return {
       success: true,
       status: 200,
@@ -301,3 +298,64 @@ export const createTasks = async (tasksData) => {
     return { success: false, status: 500, message: "Internal server error" };
   }
 };
+
+// calculate project progress
+export const progress = async (projectId) => {
+  try {
+    if (!projectId) {
+      return { success: false, status: 400, message: "Required fields missing" };
+    }
+
+    const totalTaskRes = await db.query(
+      `select count(task_name) as total 
+       from tasks 
+       where project_id = $1`,
+      [projectId]
+    );
+    const totalTask = parseInt(totalTaskRes.rows[0].total, 10);
+
+    const completedTaskRes = await db.query(
+      `select count(task_name) as completed 
+       from tasks 
+       where project_id = $1 and status = $2`,
+      [projectId, "Completed"]
+    );
+    const completedTask = parseInt(completedTaskRes.rows[0].completed, 10);
+
+    const pendingTaskRes = await db.query(
+      `select count(task_name) as completed 
+       from tasks 
+       where project_id = $1 and status = $2`,
+      [projectId, "Pending"]
+    );
+    const pendingTask = parseInt(pendingTaskRes.rows[0].completed, 10);
+
+    const ongoingTaskRes = await db.query(
+      `select count(task_name) as completed 
+       from tasks 
+       where project_id = $1 and status = $2`,
+      [projectId, "Ongoing"]
+    );
+    const ongoingTask = parseInt(ongoingTaskRes.rows[0].completed, 10);
+
+
+    const perc = totalTask === 0 ? 0 : (completedTask / totalTask) * 100;
+
+    return {
+      success: true,
+      status: 200,
+      message: "Progress calculated successfully",
+      progress: perc.toFixed(2),
+      completedTask,
+      pendingTask,
+      ongoingTask,
+      totalTask
+   
+    };
+  } catch (err) {
+    console.error("progress error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+
