@@ -1,4 +1,4 @@
-import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService, progress as progressService, workload as workloadService } from "../services/user.service.js";
+import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService, progress as progressService, workload as workloadService, profile as profileService, profileUpdate } from "../services/user.service.js";
 
 export const addProject = async (req, res) => {
   const createdby = req.user.id;
@@ -63,3 +63,16 @@ export const  workload= async(req,res)=>{
     const result = await workloadService(projectId)
     res.status(result.status).json(result);
 }
+
+export const  profile = async(req,res)=>{
+    const userId = req.user.id;
+    const result = await profileService(userId)
+    res.status(result.status).json(result);
+}
+
+export const updateProfile = async (req, res) => {
+  const userId = req.user.id;
+  const updateData = req.body;      
+  const result = await profileUpdate(userId, updateData);
+  res.status(result.status).json(result);
+};

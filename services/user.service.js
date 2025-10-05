@@ -436,3 +436,69 @@ export const workload = async (projectId) => {
     return { success: false, status: 500, message: "Internal server error" };
   }
 };
+
+export const profile = async (userId) => {
+  try {
+    if (!userId) {
+      return { success: false, status: 400, message: "Required fields missing" };
+    }
+
+    const query = `
+      SELECT firstname, lastname, username, email, password, notification
+      FROM users
+      WHERE user_id = $1
+    `;
+
+    const { rows } = await db.query(query, [userId]);
+
+    if (rows.length === 0) {
+      return { success: false, status: 404, message: "User not found" };
+    }
+
+    return {
+      success: true,
+      status: 200,
+      data: rows[0],
+    };
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+export const profileUpdate = async (userId, updateData) => {
+  if (!userId) return { success: false, status: 400, message: "User ID missing" };
+  if (!updateData || Object.keys(updateData).length === 0)
+    return { success: false, status: 400, message: "No data to update" };
+
+  // Fields we allow to update
+  const allowed = ["firstname", "lastname", "username", "email", "password", "notification"];
+
+  const updates = [];
+  const values = [];
+  let i = 1;
+
+  // Build query dynamically
+  for (const key of allowed) {
+    if (updateData[key] !== undefined) {
+      updates.push(`${key} = $${i}`);
+      values.push(updateData[key]);
+      i++;
+    }
+  }
+
+  values.push(userId); // for WHERE clause
+
+  const query = `
+    UPDATE users
+    SET ${updates.join(", ")}
+    WHERE user_id = $${i}
+    RETURNING firstname, lastname, username, email, password, notification
+  `;
+
+  const { rows } = await db.query(query, values);
+
+  if (rows.length === 0) return { success: false, status: 404, message: "User not found" };
+
+  return { success: true, status: 200, data: rows[0], message: "Profile updated successfully" };
+};
