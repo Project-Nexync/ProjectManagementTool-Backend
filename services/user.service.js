@@ -359,3 +359,66 @@ export const progress = async (projectId) => {
 };
 
 
+export const workload = async (projectId) => {
+  try {
+    if (!projectId) {
+      return { success: false, status: 400, message: "Required fields missing" };
+    }
+
+    // Step 1: Get all users assigned to tasks in the project
+    const { rows: data } = await db.query(
+      `
+      SELECT 
+        u.user_id,
+        u.username AS user_name,
+        t.task_id
+      FROM tasks t
+      JOIN task_assignments ta ON t.task_id = ta.task_id
+      JOIN users u ON ta.user_id = u.user_id
+      WHERE t.project_id = $1
+      `,
+      [projectId]
+    );
+
+    if (data.length === 0) {
+      return { success: false, status: 404, message: "No participants found for this project" };
+    }
+
+    // Step 2: Count total tasks in the project
+    const totalTasks = [...new Set(data.map(row => row.task_id))].length;
+
+    // Step 3: Count number of assigned tasks per user
+    const userTaskCount = {};
+
+    data.forEach(row => {
+      if (!userTaskCount[row.user_id]) {
+        userTaskCount[row.user_id] = {
+          name: row.user_name,
+          assigned: 0
+        };
+      }
+      userTaskCount[row.user_id].assigned += 1;
+    });
+
+    // Step 4: Calculate contribution percentage
+    const users = Object.values(userTaskCount).map(user => {
+      const percent = totalTasks > 0 ? ((user.assigned / totalTasks) * 100).toFixed(2) : "0.00";
+      return {
+        name: user.name,
+        contribution: percent
+      };
+    });
+
+    return {
+      success: true,
+      status: 200,
+      message: "Workload calculated successfully",
+      totalParticipants: users.length,
+      users
+    };
+
+  } catch (error) {
+    console.error("Error calculating workload:", error);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
