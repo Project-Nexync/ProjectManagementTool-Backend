@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProject,viewAllProject,viewProject, createTasks, progress, workload } from "../controllers/user.controller.js";
+import { addProject,viewAllProject,viewProject, createTasks, progress, workload, profile,updateProfile } from "../controllers/user.controller.js";
 import { authenticateToken } from '../middleware/auth.middleware.js';
 import { authorize } from '../middleware/isRole.middleware.js';
 
@@ -12,5 +12,8 @@ router.get('/:projectId',authenticateToken,viewProject);
 router.post('/:projectId/createTask',authenticateToken,authorize(["manager"]), createTasks);
 router.get('/:projectId/progress',authenticateToken, progress);
 router.get("/:projectId/workload",authenticateToken, workload);
+router.get("/user/profile",authenticateToken, profile );
+router.put("/user/profileupdate",authenticateToken, updateProfile);
+
 
 export default router;
