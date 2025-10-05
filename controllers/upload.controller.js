@@ -18,8 +18,7 @@ export const viewProfilePic = async (req, res) => {
 
 // Generate presigned URL and save file metadata
 export const generateFileUrlController = async (req, res) => {
-    const { taskId } = req.params;
-    const { fileName, fileType } = req.body;
+    const { fileName, fileType,taskId } = req.body;
     const userId = req.user.id; // from authenticateToken
     const result = await generateFileUrlService(fileName, fileType, userId, taskId);
     res.json({ message: "Upload URL generated", ...result });
