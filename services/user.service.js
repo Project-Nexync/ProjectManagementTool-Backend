@@ -188,19 +188,33 @@ export const viewProject = async (userId, projectId) => {
 
     // Get all tasks
     const taskResult = await db.query(
-      ` SELECT 
-            t.task_id, 
-            t.task_name, 
-            t.status, 
-            u.username AS assigned_to,  
-            t.priority, 
-            t.due_date
-        FROM tasks t
-        LEFT JOIN task_assignments ta ON t.task_id = ta.task_id
-        LEFT JOIN users u ON ta.user_id = u.user_id  
-        WHERE t.project_id = $1; `,
-      [projectId]
-    );
+  `SELECT 
+    t.task_id, 
+    t.task_name, 
+    t.status, 
+    u.username AS assigned_to,  
+    t.priority, 
+    t.due_date,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'file_id', f.file_id,
+                'file_name', f.file_name
+            )
+        ) FILTER (WHERE f.file_id IS NOT NULL),
+        '[]'
+    ) AS attachments
+FROM tasks t
+LEFT JOIN task_assignments ta ON t.task_id = ta.task_id
+LEFT JOIN users u ON ta.user_id = u.user_id
+LEFT JOIN file_attachments f ON t.task_id = f.task_id
+WHERE t.project_id = $1
+GROUP BY t.task_id, t.task_name, t.status, u.username, t.priority, t.due_date
+ORDER BY t.due_date ASC;
+`,
+  [projectId]
+);
+
 
     project.tasks = taskResult.rows;
 
