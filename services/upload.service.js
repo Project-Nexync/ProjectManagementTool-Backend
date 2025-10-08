@@ -81,3 +81,4 @@ export const getFileUrlService = async (fileId) => {
   const url = await getSignedUrl(s3, command, { expiresIn: 7200 }); // 2h
   return { url, fileName: rows[0].file_name };
 };
+
