@@ -502,3 +502,62 @@ export const profileUpdate = async (userId, updateData) => {
 
   return { success: true, status: 200, data: rows[0], message: "Profile updated successfully" };
 };
+
+
+export const getNotifications = async (userId) => {
+  if (!userId) {
+    return { success: false, status: 400, message: "User ID missing" };
+  }
+
+  try {
+    const { rows } = await db.query(
+      `SELECT * 
+       FROM notifications 
+       WHERE user_id = $1 
+       ORDER BY  is_read ASC,  created_at DESC`,
+      [userId]
+    );
+
+    return {
+      success: true,
+      status: 200,
+      data: rows,
+      message: "Notifications fetched successfully",
+    };
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    return {
+      success: false,
+      status: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+export const isRead = async (notification_id) => {
+  if (!notification_id) {
+    return { success: false, status: 400, message: "Notification ID missing" };
+  }
+
+  try {
+    await db.query(
+      `UPDATE notifications
+       SET is_read = true
+       WHERE notification_id = $1`,
+      [notification_id]
+    );
+
+    return {
+      success: true,
+      status: 200,
+      message: "Notification marked as read",
+    };
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+    return {
+      success: false,
+      status: 500,
+      message: "Internal server error",
+    };
+  }
+};
