@@ -1,4 +1,4 @@
-import { editProgress as editProgressService, editduedate as editduedateService, addMember as addMemberService, addAssignee as addAssigneeService, editTaskDescription as editTaskDescriptionService, deletetask as deletetaskService } from "../services/edit.service.js";
+import { editProgress as editProgressService, editduedate as editduedateService, addMember as addMemberService, addAssignee as addAssigneeService, editTaskDescription as editTaskDescriptionService, deletetask as deletetaskService, editProject as editProjectService, deleteProject as deleteProjectService } from "../services/edit.service.js";
 
 export const editProgress = async(req,res)=>{
     const { progress } = req.body; 
@@ -42,3 +42,17 @@ export const deletetask = async(req,res)=>{
     const result = await deletetaskService(taskId)
     res.status(result.status).json(result);
 }
+
+export const editProject = async (req, res) => {
+  const { projectId } = req.params;
+  const { name, description, end_date } = req.body;
+  const result = await editProjectService(projectId, name, description, end_date);
+  return res.status(result.status).json(result);
+};
+
+
+export const deleteProject = async (req, res) => {
+  const { projectId } = req.params;
+  const result = await deleteProjectService(projectId);
+  return res.status(result.status).json(result);
+};

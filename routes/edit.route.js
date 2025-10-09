@@ -1,5 +1,5 @@
 import express from 'express';
-import { editProgress, editduedate, addMember, addAssignee, editTaskDescription, deletetask } from "../controllers/edit.controller.js";
+import { editProgress, editduedate, addMember, addAssignee, editTaskDescription, deletetask,editProject,deleteProject } from "../controllers/edit.controller.js";
 import { authenticateToken } from '../middleware/auth.middleware.js';
 import { authorize } from '../middleware/isRole.middleware.js';
 
@@ -11,5 +11,7 @@ router.post('/:projectId/addMember',authenticateToken,authorize(["manager"]),add
 router.post('/:projectId/addMember/:taskId',authenticateToken,authorize(["manager"]),addAssignee );
 router.put('/:projectId/edittaskdes/:taskId',authenticateToken,authorize(["manager"]), editTaskDescription);
 router.put('/:projectId/deletetask/:taskId',authenticateToken,authorize(["manager"]), deletetask);
+router.put('/:projectId/editproject',authenticateToken,authorize(["manager"]), editProject);
+router.delete('/:projectId/deleteproject',authenticateToken,authorize(["manager"]), deleteProject);
 
 export default router;
