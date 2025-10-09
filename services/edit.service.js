@@ -262,4 +262,66 @@ export const deletetask = async (taskId) => {
 };
 
 
+// Edit project
+export const editProject = async (project_id, name, description, end_date) => {
+  try {
+    if (!project_id) {
+      return { success: false, status: 400, message: "Project ID is required" };
+    }
+
+    const result = await db.query(
+      `UPDATE projects
+       SET name = COALESCE($1, name),
+           description = COALESCE($2, description),
+           end_date = COALESCE($3, end_date)
+       WHERE project_id = $4
+       RETURNING *;`,
+      [name, description, end_date, project_id]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, status: 404, message: "Project not found" };
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: "Project updated successfully",
+      updatedProject: result.rows[0],
+    };
+  } catch (err) {
+    console.error("Edit project error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+// Delete project
+export const deleteProject = async (project_id) => {
+  try {
+    if (!project_id) {
+      return { success: false, status: 400, message: "Project ID is required" };
+    }
+
+    const result = await db.query(
+      `DELETE FROM projects
+       WHERE project_id = $1
+       RETURNING *;`,
+      [project_id]
+    );
+
+    if (result.rowCount === 0) {
+      return { success: false, status: 404, message: "Project not found" };
+    }
+
+    return {
+      success: true,
+      status: 200,
+      message: "Project deleted successfully",
+      deletedProject: result.rows[0],
+    };
+  } catch (err) {
+    console.error("Delete project error:", err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
 

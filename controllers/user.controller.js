@@ -1,4 +1,4 @@
-import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService, progress as progressService, workload as workloadService, profile as profileService, profileUpdate, getNotifications as getNotificationsService, isRead as isReadService } from "../services/user.service.js";
+import { addProject as addProjectService, viewAllProject as viewAllProjectService, viewProject as viewProjectService, createTasks as createTasksService, progress as progressService, workload as workloadService, profile as profileService, profileUpdate, getNotifications as getNotificationsService, isRead as isReadService, getSavedProjects as getSavedProjectsService, saveProject as savedProjectService } from "../services/user.service.js";
 
 export const addProject = async (req, res) => {
   const createdby = req.user.id;
@@ -86,5 +86,18 @@ export const getNotifications = async (req, res) => {
 export const isRead = async (req, res) => {
   const { notification_id } = req.body;    
   const result = await isReadService(notification_id);
+  res.status(result.status).json(result);
+};
+
+export const saveProject = async (req, res) => {
+  const userId = req.user.id; 
+  const { projectId } = req.params;
+  const result = await savedProjectService(userId, projectId);
+  res.status(result.status).json(result);
+};
+
+export const getSavedProjects = async (req, res) => {
+  const userId = req.user.id; 
+  const result = await getSavedProjectsService(userId);
   res.status(result.status).json(result);
 };

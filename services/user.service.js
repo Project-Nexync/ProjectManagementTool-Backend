@@ -379,7 +379,7 @@ export const workload = async (projectId) => {
       return { success: false, status: 400, message: "Required fields missing" };
     }
 
-    // Step 1: Get all users assigned to tasks in the project
+    //Get all users assigned to tasks in the project
     const { rows: data } = await db.query(
       `
       SELECT 
@@ -398,10 +398,10 @@ export const workload = async (projectId) => {
       return { success: false, status: 404, message: "No participants found for this project" };
     }
 
-    // Step 2: Count total tasks in the project
+    // Count total tasks in the project
     const totalTasks = [...new Set(data.map(row => row.task_id))].length;
 
-    // Step 3: Count number of assigned tasks per user
+    //Count number of assigned tasks per user
     const userTaskCount = {};
 
     data.forEach(row => {
@@ -414,7 +414,7 @@ export const workload = async (projectId) => {
       userTaskCount[row.user_id].assigned += 1;
     });
 
-    // Step 4: Calculate contribution percentage
+    //Calculate contribution percentage
     const users = Object.values(userTaskCount).map(user => {
       const percent = totalTasks > 0 ? ((user.assigned / totalTasks) * 100).toFixed(2) : "0.00";
       return {
@@ -554,6 +554,63 @@ export const isRead = async (notification_id) => {
     };
   } catch (err) {
     console.error("Error marking notification as read:", err);
+    return {
+      success: false,
+      status: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+export const saveProject = async (user_id, project_id) => {
+  if (!user_id || !project_id) {
+    return { success: false, status: 400, message: "User ID or Project ID missing" };
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO saved_project (user_id, project_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id, project_id) DO NOTHING;`, 
+      [user_id, project_id]
+    );
+
+    return {
+      success: true,
+      status: 200,
+      message: "Project saved successfully",
+    };
+  } catch (err) {
+    console.error("Error saving project:", err);
+    return {
+      success: false,
+      status: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+
+export const getSavedProjects = async (user_id) => {
+  if (!user_id) {
+    return { success: false, status: 400, message: "User ID missing" };
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT project_id 
+       FROM saved_project 
+       WHERE user_id = $1;`,
+      [user_id]
+    );
+
+    return {
+      success: true,
+      status: 200,
+      projects: result.rows,  
+    };
+  } catch (err) {
+    console.error("Error fetching saved projects:", err);
     return {
       success: false,
       status: 500,
