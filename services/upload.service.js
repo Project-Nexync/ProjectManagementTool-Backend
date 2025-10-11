@@ -38,7 +38,7 @@ export const getProfilePicUrlService = async (userId) => {
     Key: rows[0].profile_pic,
   });
 
-  return await getSignedUrl(s3, command, { expiresIn: 7200 }); // 2h
+  return await getSignedUrl(s3, command, { expiresIn: 72000 }); // 2h
 };
 
 /// Generate presigned URL for file upload
