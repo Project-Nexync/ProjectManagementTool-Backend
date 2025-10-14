@@ -1,4 +1,5 @@
 import db from '../config/db.config.js';
+import { handleProjectEmails,handleTaskEmails } from "../emailworkers/emailWorker.js";
 
 export const addProject = async ({ name, description, startdate, endate, createdby, assignee }) => {
   const client = await db.connect();
@@ -62,6 +63,10 @@ export const addProject = async ({ name, description, startdate, endate, created
 
     await client.query("COMMIT");
 
+    setImmediate(() => {
+      handleProjectEmails(project, membersAdded, invitationsCreated);
+    });
+
     return {
       success: true,
       status: 201,
@@ -89,8 +94,7 @@ export const viewAllProject = async (userId) => {
     //Get all projects for this user
     const projectResult = await db.query(
       `
-      select p.project_id, p.name, p.description, p.end_date, p.created_by
-      from projects p
+      select p.project_id, p.name, p.description, p.end_date, p.created_by from projects p
       left join project_members pm on p.project_id = pm.project_id
       where p.created_by = $1 or pm.user_id = $1
       group by p.project_id
@@ -298,6 +302,10 @@ export const createTasks = async (tasksData) => {
     }
 
     await db.query('COMMIT');
+
+    setImmediate(() => {
+      handleTaskEmails(createdTasks, tasksData);
+    });
 
     return {
       success: true,
