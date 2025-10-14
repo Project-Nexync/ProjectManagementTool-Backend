@@ -4,7 +4,7 @@
  */
 
 import request from 'supertest';
-import app from '../../server.js';  // adjust path if needed
+import app from '../../server.js'; 
 import db from '../../config/db.config.js';
 
 // Mock user data for testing

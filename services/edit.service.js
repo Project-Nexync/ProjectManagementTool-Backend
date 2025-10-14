@@ -1,4 +1,5 @@
 import db from '../config/db.config.js';
+import { handleDueDateEmails,handleProgressEmails } from "../emailworkers/emailWorker.js";
 
 export const editProgress = async (taskId, progress) => { 
   try {
@@ -25,6 +26,12 @@ export const editProgress = async (taskId, progress) => {
       return { success: false, status: 404, message: "Task not found" };
     }
 
+    const updatedTask = updateResult.rows[0];
+
+    setImmediate(() => {
+      handleProgressEmails(updatedTask);
+    });
+   
     return {
       success: true,
       status: 200,
@@ -59,6 +66,11 @@ export const editduedate = async (taskId, duedate) => {
       returning *;
     `;
     const updateResult = await db.query(updateQuery, [duedate, taskId]);
+    const updatedTask = updateResult.rows[0];
+
+     setImmediate(() => {
+          handleDueDateEmails(updatedTask);
+        });
 
     return {
       success: true,
