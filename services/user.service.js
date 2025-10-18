@@ -197,25 +197,21 @@ export const viewProject = async (userId, projectId) => {
     t.task_id, 
     t.task_name, 
     t.status, 
-    u.username AS assigned_to,  
     t.priority, 
     t.due_date,
-    COALESCE(
-        json_agg(
-            json_build_object(
-                'file_id', f.file_id,
-                'file_name', f.file_name
-            )
-        ) FILTER (WHERE f.file_id IS NOT NULL),
-        '[]'
-    ) AS attachments
+    -- array of assigned usernames
+    COALESCE(array_agg(DISTINCT u.username) FILTER (WHERE u.username IS NOT NULL), '{}') AS assigned_to,
+    -- array of attachments (use jsonb_build_object)
+    COALESCE(jsonb_agg(DISTINCT jsonb_build_object('file_id', f.file_id, 'file_name', f.file_name)) 
+             FILTER (WHERE f.file_id IS NOT NULL), '[]') AS attachments
 FROM tasks t
 LEFT JOIN task_assignments ta ON t.task_id = ta.task_id
 LEFT JOIN users u ON ta.user_id = u.user_id
 LEFT JOIN file_attachments f ON t.task_id = f.task_id
 WHERE t.project_id = $1
-GROUP BY t.task_id, t.task_name, t.status, u.username, t.priority, t.due_date
+GROUP BY t.task_id, t.task_name, t.status, t.priority, t.due_date
 ORDER BY t.due_date ASC;
+
 `,
   [projectId]
 );
