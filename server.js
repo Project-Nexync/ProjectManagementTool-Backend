@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors'; 
 
-
+import googleCalendarRoutes from "./routes/googleCalendarRoutes.js";
 import dbRoutes from './routes/db.routes.js';
 import authRoutes from './routes/auth.route.js';
 import projectRoutes from './routes/user.route.js';
@@ -25,6 +25,7 @@ app.use('/auth',authRoutes);
 app.use("/project", projectRoutes);
 app.use("/edit",editRoutes);
 app.use("/upload", profileRoutes);
+app.use("/api", googleCalendarRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World');

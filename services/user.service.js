@@ -1,5 +1,6 @@
 import db from '../config/db.config.js';
 import { handleProjectEmails,handleTaskEmails } from "../emailworkers/emailWorker.js";
+import { addDeadlineToGoogleCalendar } from './calender.service.js';
 
 export const addProject = async ({ name, description, startdate, endate, createdby, assignee }) => {
   const client = await db.connect();
@@ -299,6 +300,7 @@ export const createTasks = async (tasksData) => {
       }
 
       createdTasks.push(createdTask);
+      setImmediate(() => addDeadlineToGoogleCalendar(createdTasks,userIds));
     }
 
     await db.query('COMMIT');
@@ -306,6 +308,9 @@ export const createTasks = async (tasksData) => {
     setImmediate(() => {
       handleTaskEmails(createdTasks, tasksData);
     });
+
+
+
 
     return {
       success: true,
@@ -486,7 +491,7 @@ export const profileUpdate = async (userId, updateData) => {
   const values = [];
   let i = 1;
 
-  // Build query dynamically
+  
   for (const key of allowed) {
     if (updateData[key] !== undefined) {
       updates.push(`${key} = $${i}`);
@@ -495,7 +500,7 @@ export const profileUpdate = async (userId, updateData) => {
     }
   }
 
-  values.push(userId); // for WHERE clause
+  values.push(userId); 
 
   const query = `
     UPDATE users
