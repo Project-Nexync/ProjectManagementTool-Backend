@@ -3,7 +3,7 @@ import { generateProfilePicUrlService, getProfilePicUrlService, generateFileUrlS
 // Generate upload URL & update user table
 export const generateProfilePicUrl = async (req, res) => {
     const { fileName, fileType } = req.body;
-    const userId = req.user.id; // from authenticateToken
+    const userId = req.user.id; 
     const result = await generateProfilePicUrlService(fileName, fileType, userId);
     res.json({ message: "Profile pic URL generated", ...result });
 };
@@ -19,7 +19,7 @@ export const viewProfilePic = async (req, res) => {
 // Generate presigned URL and save file metadata
 export const generateFileUrlController = async (req, res) => {
     const { fileName, fileType,taskId } = req.body;
-    const userId = req.user.id; // from authenticateToken
+    const userId = req.user.id; 
     const result = await generateFileUrlService(fileName, fileType, userId, taskId);
     res.json({ message: "Upload URL generated", ...result });
  
