@@ -10,7 +10,7 @@ const router = express.Router();
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "http://localhost:5000/api/auth/google/callback"
+  "https://projectmanagementtool-backend-sbgc.onrender.com/api/auth/google/callback"
 );
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar.events"];
