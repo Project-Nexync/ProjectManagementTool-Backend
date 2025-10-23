@@ -40,7 +40,7 @@ router.get("/auth/google/callback", async (req, res) => {
     await db.query("UPDATE users SET google_tokens = $1 WHERE user_id = $2", [tokens, userId]);
 
     const redirectUrl = decodeURIComponent(
-      redirect || "https://projectmanagementtool-frontend.onrender.com//settings"
+      redirect || "https://projectmanagementtool-frontend.onrender.com/settings"
     );
     return res.redirect(`${redirectUrl}?google=success`);
   } catch (error) {
